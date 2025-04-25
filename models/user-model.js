@@ -31,7 +31,7 @@ userSchema.pre("save", async function (next) {
 
 userSchema.methods.generateToken = function () {
   return jwt.sign({ id: this._id }, "x-auth-token", {
-    expiresIn: "60*1000",
+    expiresIn: "3d",
   });
 };
 
