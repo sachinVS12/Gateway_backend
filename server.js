@@ -1,10 +1,15 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const User = require("./models/user-model");
+const cors = require("cors");
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.use(cors({
+    origin : "*",
+    methods : ["GET","POST","PUT","PATCH","DELETE"]
+}))
 
 app.post("/signup", async (req, res) => {
   try {
