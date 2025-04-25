@@ -10,7 +10,7 @@ app.use(cors({
 }))
 
 app.get("/",(req,res)=>{
-    res.status(200).json({success:true,message:"Hello world from server.js"})
+    res.status(200).json({success:true,message:"Hello sarayu infotech"})
 })
 
 app.listen(5000,()=>{
