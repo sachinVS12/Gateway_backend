@@ -8,8 +8,8 @@ app.use(express.urlencoded({ extended: false }));
 
 app.post("/signup", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const user = await User.create({ name, email, password });
+    const { email, password } = req.body;
+    const user = await User.create({ email, password });
     const token = await user.generateToken();
     res.status(201).json({ success: true, token });
   } catch (error) {
