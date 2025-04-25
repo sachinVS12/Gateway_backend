@@ -1,14 +1,18 @@
 name: Deploy to EC2
+
 on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - name: Deploy files to EC2
         uses: easingthemes/ssh-deploy@v5.0.3
         env:
@@ -18,14 +22,36 @@ jobs:
           SOURCE: './'
           TARGET: '/home/ubuntu/app'
           EXCLUDE: '/node_modules/'
-      - name: Install dependencies and start app
+
+      - name: Install dependencies and restart app on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Go to project directory
             cd /home/ubuntu/app
+
+            # Ensure MongoDB is installed and running
+            if ! pgrep -x "mongod" > /dev/null
+            then
+              echo "MongoDB is not running. Installing MongoDB..."
+              sudo apt update
+              sudo apt install -y mongodb
+              sudo systemctl start mongodb
+              sudo systemctl enable mongodb
+            else
+              echo "MongoDB is already running."
+            fi
+
+            # Install node dependencies
             npm install
+
+            # Restart app using PM2
             pm2 stop all || true
-            pm2 start server.js --name 'express-app'
+            pm2 start index.js --name 'express-app'
+
+            # Optional: make PM2 run on reboot
+            pm2 startup
+            pm2 save
