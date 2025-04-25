@@ -40,7 +40,7 @@ app.post("/signin", async (req, res) => {
 });
 
 mongoose
-  .connect("mongodb://localhost:27017/sachin")
+  .connect("mongodb+srv://vs1sachi12:dT1espceuYkgNHFR@cluster0.dcs041x.mongodb.net/confguredevice")
   .then(() => {
     console.log("Database connection successful!");
     app.listen(5000, () => {
