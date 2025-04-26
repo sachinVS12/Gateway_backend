@@ -7,8 +7,8 @@ const Broker = require("../models/broker-model");
 // Handle POST request to /brokers
 router.post('/brokers', async (req, res) => {
     try {
-      const { brokerIp, portNumber, username, password } = req.body;
-      const broker = new Broker({ brokerIp, portNumber, username, password });
+      const { brokerIp, portNumber, username, password, label } = req.body;
+      const broker = new Broker({ brokerIp, portNumber, username, password, label });
       await broker.save();
       res.status(201).json({
         success: true,

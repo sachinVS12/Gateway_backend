@@ -18,6 +18,10 @@ const BrokerSchema = new mongoose.Schema({
     type: String,
     required: [true, "Password is required"],
   },
-});
+  label:{
+    type: String,
+    required: [true, "label is required"],
+  }
+}, { timestamps: true });
 
 module.exports = mongoose.model("Broker", BrokerSchema);
