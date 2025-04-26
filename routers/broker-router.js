@@ -22,5 +22,45 @@ router.post('/brokers', async (req, res) => {
       });
     }
   });
+
+// 2. Handle GET request to show all brokers
+router.get('/brokers', async (req, res) => {
+    try {
+      const brokers = await Broker.find();
+      res.status(200).json({
+        success: true,
+        data: brokers,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch brokers',
+        error: error.message,
+      });
+    }
+  });
+  
+  // 3. (Optional) Handle GET request to show one broker by ID
+  router.get('/brokers/:id', async (req, res) => {
+    try {
+      const broker = await Broker.findById(req.params.id);
+      if (!broker) {
+        return res.status(404).json({
+          success: false,
+          message: 'Broker not found',
+        });
+      }
+      res.status(200).json({
+        success: true,
+        data: broker,
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch broker',
+        error: error.message,
+      });
+    }
+  });
   
   module.exports = router;
