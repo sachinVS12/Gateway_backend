@@ -21,7 +21,12 @@ const BrokerSchema = new mongoose.Schema({
   label:{
     type: String,
     required: [true, "label is required"],
-  }
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: [true, "User ID is required"],
+}
 }, { timestamps: true });
 
 module.exports = mongoose.model("Broker", BrokerSchema);

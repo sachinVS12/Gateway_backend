@@ -2,14 +2,15 @@ const express = require("express");
 const mqtt = require("mqtt");
 const router = express.Router();
 const Broker = require("../models/broker-model");
+const authMiddleware = require("../middleware/auth");
 
 
   
 // 1.  Handle POST request to /brokers
-router.post('/brokers', async (req, res) => {
+router.post('/brokers',authMiddleware, async (req, res) => {
     try {
       const { brokerIp, portNumber, username, password, label } = req.body;
-      const broker = new Broker({ brokerIp, portNumber, username, password, label });
+      const broker = new Broker({ brokerIp, portNumber, username, password, label,userId: req.userId });
       await broker.save();
       res.status(201).json({
         success: true,
@@ -65,61 +66,52 @@ router.get('/brokers', async (req, res) => {
   });
 
 
-// MQTT Client for publishing messages
-const mqttClient = mqtt.connect("mqtt://localhost:1883", {
-  clientId: "express-publisher",
-});
+// Publish to MQTT topic (protected route)
+router.post('/publish', authMiddleware, async (req, res) => {
+  try {
+      const { topic, message } = req.body;
+      const mqttClient = req.mqttClients.get(req.userId);
 
-mqttClient.on("connect", () => {
-  console.log("Express MQTT publisher connected");
-});
+      if (!mqttClient) {
+          return res.status(400).json({ success: false, message: "No MQTT connection" });
+      }
 
-mqttClient.on("error", (err) => {
-  console.error("Express MQTT publisher error:", err);
-});
-
-// Endpoint to publish MQTT messages
-router.post("/publish", (req, res) => {
-  const { topic, message } = req.body;
-
-  if (!topic || !message) {
-    return res
-      .status(400)
-      .json({ error: "Topic and message are required" });
+      mqttClient.publish(topic, message, (err) => {
+          if (err) {
+              return res.status(500).json({ success: false, message: "Failed to publish", error: err.message });
+          }
+          res.status(200).json({ success: true, message: "Message published" });
+      });
+  } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
   }
-
-  mqttClient.publish(topic, message, { qos: 1 }, (err) => {
-    if (err) {
-      console.error("Publish error:", err);
-      return res.status(500).json({ error: "Failed to publish message" });
-    }
-    res.status(200).json({ success: "Message published successfully" });
-  });
 });
 
-// Example endpoint to subscribe to a topic (for demonstration)
-router.post("/subscribe", (req, res) => {
-  const { topic } = req.body;
+// Subscribe to MQTT topic (protected route)
+router.post('/subscribe', authMiddleware, async (req, res) => {
+  try {
+      const { topic } = req.body;
+      const mqttClient = req.mqttClients.get(req.userId);
 
-  if (!topic) {
-    return res.status(400).json({ error: "Topic is required" });
+      if (!mqttClient) {
+          return res.status(400).json({ success: false, message: "No MQTT connection" });
+      }
+
+      mqttClient.subscribe(topic, (err) => {
+          if (err) {
+              return res.status(500).json({ success: false, message: "Failed to subscribe", error: err.message });
+          }
+          res.status(200).json({ success: true, message: `Subscribed to ${topic}` });
+      });
+
+      // Handle incoming messages (optional)
+      mqttClient.on("message", (topic, message) => {
+          console.log(`Received message on ${topic}: ${message.toString()}`);
+          // You can emit this to the client via WebSocket or store it for later retrieval
+      });
+  } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
   }
-
-  mqttClient.subscribe(topic, { qos: 1 }, (err) => {
-    if (err) {
-      console.error("Subscribe error:", err);
-      return res
-        .status(500)
-        .json({ error: "Failed to subscribe to topic" });
-    }
-    res.status(200).json({ success: `Subscribed to ${topic}` });
-  });
-});
-
-// Log incoming MQTT messages (for subscribed topics)
-mqttClient.on("message", (topic, message) => {
-  console.log(`Received on ${topic}: ${message.toString()}`);
-  // Optionally, store messages in MongoDB or handle them as needed
 });
   
   module.exports = router;
