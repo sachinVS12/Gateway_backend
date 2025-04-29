@@ -39,12 +39,6 @@ router.post("/signin", async (req, res) => {
     }
   });
 
-router.get("/test", (req, res) => {
-    res.status(200).json({
-      success: true,
-      message: "Auth route is working",
-    });
-  });
 
   module.exports = router;
 
